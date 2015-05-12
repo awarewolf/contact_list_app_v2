@@ -1,5 +1,6 @@
-require_relative 'invalid_contact_error'
+require_relative 'custom_errors'
 require_relative 'connection'
+require_relative 'phone_number'
 
 class Contact
 
@@ -34,9 +35,17 @@ class Contact
     end
   end
 
+  def phone_numbers
+    @phone_numbers ||= PhoneNumber.find_all_for(@id)
+  end
+
   def destroy
     # Executes a DELETE SQL command against the database.
     # Ask yourself / discuss: What will it need to provide the database as part of the DELETE SQL statement?
+    phone_numbers.each do |phone_number|
+      phone_number.destroy
+    end
+
     Connection.db.exec_params('DELETE FROM contacts WHERE id = $1', [@id])
   end
 
