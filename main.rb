@@ -32,3 +32,55 @@ end
 same_contact.destroy
 
 puts Contact.find(id).inspect
+
+*******
+
+  def initialize
+    ARGV << 'help' if ARGV.empty?
+    @command = ARGV.shift.downcase
+    @parameters = ARGV
+    parse
+  end
+
+  def help
+    puts "Here is a list of available commands:"
+    puts "  new  - Create a new contact"
+    puts "  list - List all contacts"
+    puts "  show - Show a contact"
+    puts "  find - Find a contact"
+  end
+
+  def get_info
+    puts "Enter new contact info:"
+    puts "email >"
+    email = gets.chomp
+    puts "first name >"
+    firstname = gets.chomp
+    puts "last name >"
+    lastname = gets.chomp
+    {email:email,firstname:name,lastname:name}
+  end
+
+  def create_new
+    info = get_info
+    Contact.new(info[:lastname], info[:firstname], info[:email])
+  end
+
+  def parse
+    case @command
+    when 'new'
+      create_new
+    when 'list'
+      Contact.all
+    when 'show'
+      Contact.show(@parameters[1])
+    when 'find'
+      Contact.find(@parameters[1])
+    when 'help'
+      help
+    else
+      help
+    end
+  end
+
+end
