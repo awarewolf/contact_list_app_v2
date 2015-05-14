@@ -1,7 +1,4 @@
-require './contact'
-require 'pry'
-require 'pp'
-require 'colorize'
+require_relative 'setup'
 
 class Main
 
@@ -9,7 +6,7 @@ class Main
     ARGV << 'help' if ARGV.empty?
     @command = ARGV.shift.downcase
     @parameters = ARGV
-    parse
+    parse_arguments
   end
 
   def help
@@ -20,40 +17,38 @@ class Main
     puts "  find - Find a contact"
   end
 
-  def phone_number_prompt
-    puts "Enter phone number:"
-    prompt
-    phone_number = STDIN.gets.chomp
-    puts "Enter location ([return] for none):"
-    prompt
-    location = STDIN.gets.chomp
+  def get_phone_number_info
+    phone_number = prompt_for( 'phone number' )
+    location = prompt_for( 'location ([return] for none)' )
     location = nil if location.empty?
-    PhoneNumber.new( @contact_id, phone_number, location )
+    { contact_id: @contact_id, phone_number: phone_number, location: location }
+  end
+
+  def add_phone_number
+    info = get_phone_number_info
+    # PhoneNumber.new( info[:contact_id], info[:phone_number], info[:location] ) V2
+    PhoneNumber.create(info)
   end
 
   def delete_prompt
     puts "Are you sure you want to delete this contact? (y/n)"
-    prompt
-    option = STDIN.gets.chomp.downcase
-    case option
+    case prompt_for.downcase
     when 'y'
       @contact.destroy
     when 'n'
     else
       invalid_option
-      phone_number_prompt
+      delete_prompt
     end
   end
 
    def more_options_prompt
-    @contact.to_s
+    puts @contact.to_s
     puts "Contact options:"
     puts "(a)dd a phone number / (d)elete the contact / [return] to exit"
-    prompt
-    option = STDIN.gets.chomp.downcase
-    case option
+    case prompt_for.downcase
     when 'a'
-      phone_number_prompt
+      add_phone_number
     when 'd'
       delete_prompt
     when ''
@@ -63,61 +58,62 @@ class Main
     end
   end
 
-  def get_info
+  def get_contact_info
     puts "Enter new contact info:"
-    print "first name >"
-    firstname = STDIN.gets.chomp
-    print "last name >"
-    lastname = STDIN.gets.chomp
-    print "email >"
-    email = STDIN.gets.chomp
+    firstname = prompt_for( 'first name' )
+    lastname = prompt_for( 'last name' )
+    email = prompt_for( 'email' )
     { firstname: firstname, lastname: lastname, email: email }
   end
 
-  def create_new
-    info = get_info
-    Contact.new( info[:firstname], info[:lastname], info[:email] )
+  def create_new_contact
+    info = get_contact_info
+    # Contact.new( info[:firstname], info[:lastname], info[:email] ) V2
+    Contact.create(info)
   end
 
   def show_prompt
     puts "Show contacts by:"
     puts "(f)irst name, (l)astname, (e)mail"
-    prompt
-    option = STDIN.gets.chomp.downcase
-    case option
+    case prompt_for.downcase
     when 'f'
-      Contact.find_all_by_firstname.inspect
+      # Contact.find_all_by_lastname( prompt_for( 'first name' ) ).inspect V2
+      Contact.find( firstname: prompt_for( 'first name' ) )
     when 'l'
-      Contact.find_all_by_lastname.inspect
+      # Contact.find_all_by_lastname( prompt_for( 'last name' ) ).inspect V2
+      Contact.find( lastname: prompt_for( 'last name' ) )
     when 'e'
-      Contact.find_all_by_email.inspect
+      # Contact.find_all_by_email( prompt_for( 'email' ) ).inspect V2
+      Contact.find( email: prompt_for( 'email' ) )
     else
       invalid_option
       show_prompt
     end
   end
 
-  def prompt
-    print '>'
+  def prompt_for( input='' )
+    print "#{input} >"
+    STDIN.gets.chomp
   end
 
   def invalid_option
     puts 'Invalid option'
   end
 
-  def parse
+  def parse_arguments
     case @command
     when 'new'
-      @contact = create_new
+      @contact = create_new_contact
       @contact.save
       more_options_prompt
     when 'list'
-      Contact.find_all.each { |contact| contact.to_s }
+      # Contact.find_all.each { |contact| contact.to_s } V2
+      Contact.all.each { |contact| puts contact.to_s }
     when 'show'
       show_prompt
     when 'find'
       @contact = Contact.find(@parameters[0])
-       more_options_prompt if @contact
+      more_options_prompt if @contact
     when 'help'
       help
     else
