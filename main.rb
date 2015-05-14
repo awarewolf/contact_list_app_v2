@@ -21,13 +21,13 @@ class Main
     phone_number = prompt_for( 'phone number' )
     location = prompt_for( 'location ([return] for none)' )
     location = nil if location.empty?
-    { contact_id: @contact_id, phone_number: phone_number, location: location }
+    { phone_number: phone_number, location: location }
   end
 
   def add_phone_number
     info = get_phone_number_info
     # PhoneNumber.new( info[:contact_id], info[:phone_number], info[:location] ) V2
-    PhoneNumber.create(info)
+    @contact.phone_numbers.create(info)
   end
 
   def delete_prompt
@@ -69,7 +69,9 @@ class Main
   def create_new_contact
     info = get_contact_info
     # Contact.new( info[:firstname], info[:lastname], info[:email] ) V2
-    Contact.create(info)
+    contact = Contact.create(info)
+    raise InvalidContactError, contact.errors.full_messages.join(', ') unless contact.errors.empty?
+    contact
   end
 
   def show_prompt
@@ -104,7 +106,6 @@ class Main
     case @command
     when 'new'
       @contact = create_new_contact
-      @contact.save
       more_options_prompt
     when 'list'
       # Contact.find_all.each { |contact| contact.to_s } V2
@@ -112,13 +113,16 @@ class Main
     when 'show'
       show_prompt
     when 'find'
-      @contact = Contact.find(@parameters[0])
+      @contact = Contact.find(@parameters[0].to_i)
       more_options_prompt if @contact
     when 'help'
       help
     else
       help
     end
+  rescue InvalidContactError => e
+    puts e.message
+    retry
   end
 
 end
