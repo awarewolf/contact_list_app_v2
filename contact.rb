@@ -15,6 +15,11 @@ class Contact
     @id = id
   end
 
+  def to_s
+    # TODO: return string representation of Contact
+    puts "#{@id}: #{@firstname} #{@lastname} (#{@email})"
+  end
+
   def is_new?
     @id.nil?
   end
@@ -65,6 +70,12 @@ class Contact
     # A class method to SELECT a contact row from the database by id and return a Contact instance that represents ("maps to") that row.
     # Ask yourself / discuss: Why is this a class method and not an instance method?
     (fill_results_from Connection.db.exec_params('SELECT id, firstname, lastname, email FROM contacts WHERE id = $1 LIMIT 1', [id])).first
+  end
+
+  def self.find_all
+    # A class method to SELECT a contact row from the database by id and return a Contact instance that represents ("maps to") that row.
+    # Ask yourself / discuss: Why is this a class method and not an instance method?
+    fill_results_from Connection.db.exec_params('SELECT * FROM contacts')
   end
 
   def self.find_all_by_lastname(name)

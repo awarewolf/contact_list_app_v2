@@ -1,6 +1,7 @@
 GEM
   specs:
     coderay (1.1.0)
+    colorize (0.7.7)
     method_source (0.8.2)
     pg (0.18.1)
     pry (0.10.1)
@@ -13,5 +14,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  colorize
   pg
   pry

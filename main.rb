@@ -1,39 +1,9 @@
 require './contact'
 require 'pry'
+require 'pp'
+require 'colorize'
 
-contact = Contact.new("Khurram", "Virani", "kv@gmail.com")
-
-contact.save
-
-contact.firstname = "K"
-contact.lastname = "V"
-contact.save
-
-id = contact.id
-
-num1 = PhoneNumber.new(id,'604-555-5555')
-num1.save
-
-num2 = PhoneNumber.new(id,'604-666-6666','Number of the B3457')
-num2.save
-# binding.pry
-puts PhoneNumber.find_all_for(id)
-
-same_contact = Contact.find(id)
-puts same_contact.firstname # => 'K'
-puts same_contact.lastname  # => 'V'
-puts same_contact.email # => 'kv@gmail.com'
-
-contacts = Contact.find_all_by_lastname('Virani')
-contacts.each do |c|
-  puts c
-end
-
-same_contact.destroy
-
-puts Contact.find(id).inspect
-
-*******
+class Main
 
   def initialize
     ARGV << 'help' if ARGV.empty?
@@ -50,32 +20,104 @@ puts Contact.find(id).inspect
     puts "  find - Find a contact"
   end
 
+  def phone_number_prompt
+    puts "Enter phone number:"
+    prompt
+    phone_number = STDIN.gets.chomp
+    puts "Enter location ([return] for none):"
+    prompt
+    location = STDIN.gets.chomp
+    location = nil if location.empty?
+    PhoneNumber.new( @contact_id, phone_number, location )
+  end
+
+  def delete_prompt
+    puts "Are you sure you want to delete this contact? (y/n)"
+    prompt
+    option = STDIN.gets.chomp.downcase
+    case option
+    when 'y'
+      @contact.destroy
+    when 'n'
+    else
+      invalid_option
+      phone_number_prompt
+    end
+  end
+
+   def more_options_prompt
+    @contact.to_s
+    puts "Contact options:"
+    puts "(a)dd a phone number / (d)elete the contact / [return] to exit"
+    prompt
+    option = STDIN.gets.chomp.downcase
+    case option
+    when 'a'
+      phone_number_prompt
+    when 'd'
+      delete_prompt
+    when ''
+    else
+      invalid_option
+      more_options_prompt
+    end
+  end
+
   def get_info
     puts "Enter new contact info:"
-    puts "email >"
-    email = gets.chomp
-    puts "first name >"
-    firstname = gets.chomp
-    puts "last name >"
-    lastname = gets.chomp
-    {email:email,firstname:name,lastname:name}
+    print "first name >"
+    firstname = STDIN.gets.chomp
+    print "last name >"
+    lastname = STDIN.gets.chomp
+    print "email >"
+    email = STDIN.gets.chomp
+    { firstname: firstname, lastname: lastname, email: email }
   end
 
   def create_new
     info = get_info
-    Contact.new(info[:lastname], info[:firstname], info[:email])
+    Contact.new( info[:firstname], info[:lastname], info[:email] )
+  end
+
+  def show_prompt
+    puts "Show contacts by:"
+    puts "(f)irst name, (l)astname, (e)mail"
+    prompt
+    option = STDIN.gets.chomp.downcase
+    case option
+    when 'f'
+      Contact.find_all_by_firstname.inspect
+    when 'l'
+      Contact.find_all_by_lastname.inspect
+    when 'e'
+      Contact.find_all_by_email.inspect
+    else
+      invalid_option
+      show_prompt
+    end
+  end
+
+  def prompt
+    print '>'
+  end
+
+  def invalid_option
+    puts 'Invalid option'
   end
 
   def parse
     case @command
     when 'new'
-      create_new
+      @contact = create_new
+      @contact.save
+      more_options_prompt
     when 'list'
-      Contact.all
+      Contact.find_all.each { |contact| contact.to_s }
     when 'show'
-      Contact.show(@parameters[1])
+      show_prompt
     when 'find'
-      Contact.find(@parameters[1])
+      @contact = Contact.find(@parameters[0])
+       more_options_prompt if @contact
     when 'help'
       help
     else
@@ -84,3 +126,5 @@ puts Contact.find(id).inspect
   end
 
 end
+
+Main.new
